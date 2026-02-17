@@ -1,0 +1,94 @@
+<nav class="fixed top-0 left-0 right-0 z-50">
+  <div class="bg-black/40 backdrop-blur-xl border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+
+      <a routerLink="/" class="flex items-center gap-3 select-none">
+
+          <img
+            src="assets/brand/logo.png"
+            alt="LAGUN logo"
+            class="h-12 w-auto object-contain
+                  transition-transform duration-300
+                  hover:scale-105
+                  drop-shadow-[0_0_12px_rgba(0,229,255,0.65)]
+                  md:h-11"
+          />
+
+        <span class="hidden md:inline text-xs tracking-widest text-white/60">
+          NOTICIAS • REVIEWS • GAMING
+        </span>
+
+      </a>
+
+      <div class="hidden md:flex items-center gap-8 text-sm uppercase tracking-wider text-white/80">
+        <a
+          *ngFor="let l of links"
+          [routerLink]="l.path"
+          routerLinkActive="text-white"
+          class="relative hover:text-white transition
+                 after:absolute after:-bottom-2 after:left-0 after:h-[2px] after:w-0
+                 after:bg-gradient-to-r after:from-[#00E5FF] after:to-[#FF2CDF]
+                 after:transition-all hover:after:w-full"
+        >
+          {{ l.label }}
+        </a>
+      </div>
+
+      <div class="hidden md:flex items-center gap-3">
+        <a
+          routerLink="/news"
+          class="px-4 py-2 rounded-full text-sm font-semibold text-white
+                 bg-gradient-to-r from-[#FF2CDF] to-[#7C3AED]
+                 shadow-[0_0_24px_rgba(255,44,223,0.35)]
+                 hover:scale-[1.03] active:scale-[0.99] transition"
+        >
+          Explorar
+        </a>
+      </div>
+
+      <button
+        type="button"
+        class="md:hidden inline-flex items-center justify-center rounded-xl p-2 text-white/80
+               border border-white/10 bg-white/5 hover:bg-white/10 transition"
+        (click)="toggleMobile()"
+        aria-label="Abrir menú"
+      >
+        <span class="text-lg">{{ mobileOpen() ? "✕" : "☰" }}</span>
+      </button>
+
+    </div>
+
+    <div class="md:hidden px-4 sm:px-6 pb-4" *ngIf="mobileOpen()">
+      <div class="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-3">
+
+        <a
+          *ngFor="let l of links"
+          [routerLink]="l.path"
+          routerLinkActive="text-white"
+          (click)="closeMobile()"
+          class="block px-4 py-3 rounded-xl text-sm uppercase tracking-wider text-white/80
+                 hover:text-white hover:bg-white/5 transition"
+        >
+          {{ l.label }}
+        </a>
+
+        <div class="mt-2 pt-2 border-t border-white/10">
+          <a
+            routerLink="/news"
+            (click)="closeMobile()"
+            class="block text-center px-4 py-3 rounded-xl text-sm font-semibold text-white
+                   bg-gradient-to-r from-[#FF2CDF] to-[#7C3AED]
+                   shadow-[0_0_24px_rgba(255,44,223,0.35)]
+                   hover:scale-[1.01] active:scale-[0.99] transition"
+          >
+            Explorar
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<div class="h-[72px]"></div>
