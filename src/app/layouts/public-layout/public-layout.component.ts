@@ -8,11 +8,13 @@ import { FooterComponent } from "../../shared/ui/footer/footer.component";
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, FooterComponent],
   template: `
-    <lagun-navbar />
-    <main class="min-h-screen bg-[#05010A] text-white">
-      <router-outlet />
+  <app-navbar></app-navbar>
+
+    <main class="min-h-screen bg-[#05010A] text-white pt-20">
+      <router-outlet></router-outlet>
     </main>
-    <lagun-footer />
+
+    <lagun-footer></lagun-footer>
   `,
 })
 export class PublicLayoutComponent {}

@@ -3,21 +3,18 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
 
       <a routerLink="/" class="flex items-center gap-3 select-none">
-
-          <img
-            src="assets/brand/logo.png"
-            alt="LAGUN logo"
-            class="h-12 w-auto object-contain
-                  transition-transform duration-300
-                  hover:scale-105
-                  drop-shadow-[0_0_12px_rgba(0,229,255,0.65)]
-                  md:h-11"
-          />
-
+        <img
+          src="assets/brand/logo.png"
+          alt="LAGUN logo"
+          class="h-12 w-auto object-contain
+                 transition-transform duration-300
+                 hover:scale-105
+                 drop-shadow-[0_0_12px_rgba(0,229,255,0.65)]
+                 md:h-11"
+        />
         <span class="hidden md:inline text-xs tracking-widest text-white/60">
           NOTICIAS • REVIEWS • GAMING
         </span>
-
       </a>
 
       <div class="hidden md:flex items-center gap-8 text-sm uppercase tracking-wider text-white/80">
@@ -35,6 +32,7 @@
       </div>
 
       <div class="hidden md:flex items-center gap-3">
+
         <a
           routerLink="/news"
           class="px-4 py-2 rounded-full text-sm font-semibold text-white
@@ -44,6 +42,49 @@
         >
           Explorar
         </a>
+
+        <ng-container *ngIf="!loggedIn; else loggedDesktop">
+          <button
+            (click)="goLogin()"
+            class="px-4 py-2 rounded-full text-sm font-semibold text-white
+                   border border-white/15 hover:border-white/30 transition"
+          >
+            Iniciar sesión
+          </button>
+        </ng-container>
+
+        <ng-template #loggedDesktop>
+          <div class="flex items-center gap-3">
+            <div class="hidden lg:flex flex-col leading-tight text-right">
+              <span class="text-xs text-white/60">Sesión activa</span>
+              <span class="text-sm font-semibold text-white">
+                {{ profile?.full_name || 'Usuario' }}
+              </span>
+            </div>
+
+            <div class="w-9 h-9 rounded-full overflow-hidden border border-white/15 bg-white/5 grid place-items-center">
+              <img
+                *ngIf="profile?.avatar_url; else fallbackAvatar"
+                [src]="profile?.avatar_url!"
+                class="w-full h-full object-cover"
+                alt="Avatar"
+              />
+              <ng-template #fallbackAvatar>
+                <span class="text-xs font-bold text-white/80">
+                  {{ initial }}
+                </span>
+              </ng-template>
+            </div>
+
+            <button
+              (click)="logout()"
+              class="px-3 py-2 rounded-full text-sm border border-white/15 hover:border-white/30 transition"
+            >
+              Salir
+            </button>
+          </div>
+        </ng-template>
+
       </div>
 
       <button
@@ -72,7 +113,8 @@
           {{ l.label }}
         </a>
 
-        <div class="mt-2 pt-2 border-t border-white/10">
+        <div class="mt-2 pt-2 border-t border-white/10 space-y-2">
+
           <a
             routerLink="/news"
             (click)="closeMobile()"
@@ -83,6 +125,47 @@
           >
             Explorar
           </a>
+
+          <ng-container *ngIf="!loggedIn; else loggedMobile">
+            <button
+              (click)="goLogin(); closeMobile()"
+              class="w-full text-center px-4 py-3 rounded-xl text-sm font-semibold
+                     border border-white/15 text-white hover:border-white/30 transition"
+            >
+              Iniciar sesión
+            </button>
+          </ng-container>
+
+          <ng-template #loggedMobile>
+            <div class="flex items-center justify-between px-2 py-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full overflow-hidden border border-white/15 bg-white/5 grid place-items-center">
+                  <img
+                    *ngIf="profile?.avatar_url; else fallbackAvatarMobile"
+                    [src]="profile?.avatar_url!"
+                    class="w-full h-full object-cover"
+                    alt="Avatar"
+                  />
+                  <ng-template #fallbackAvatarMobile>
+                    <span class="text-xs font-bold text-white/80">
+                      {{ initial }}
+                    </span>
+                  </ng-template>
+                </div>
+                <span class="text-sm text-white">
+                  {{ profile?.full_name || 'Usuario' }}
+                </span>
+              </div>
+
+              <button
+                (click)="logout(); closeMobile()"
+                class="px-3 py-2 rounded-full text-sm border border-white/15 hover:border-white/30 transition"
+              >
+                Salir
+              </button>
+            </div>
+          </ng-template>
+
         </div>
 
       </div>

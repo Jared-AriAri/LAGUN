@@ -1,12 +1,39 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
+  selector: 'app-login-page',
   standalone: true,
-  template: `
-    <div class="min-h-[60vh] max-w-md mx-auto px-6 py-12 text-white">
-      <h2 class="text-3xl font-bold">Login</h2>
-      <p class="text-white/60 mt-2">Aquí irá el login (admin / usuario).</p>
-    </div>
-  `,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './login.page.html',
+  styleUrls: ['./login.page.css'],
 })
-export class LoginPage {}
+export class LoginPage {
+  email = '';
+  password = '';
+  loading = false;
+  errorMsg = '';
+
+  constructor(private auth: AuthService, private router: Router) {}
+
+  async submit() {
+    this.errorMsg = '';
+    this.loading = true;
+
+    try {
+      await this.auth.signIn(this.email.trim(), this.password);
+
+      await this.auth.refreshRole?.();
+
+      const role = this.auth.roleSnapshot();
+      this.router.navigate([role === 'editor' ? '/admin' : '/']);
+    } catch (e: any) {
+      this.errorMsg = e?.message ?? 'No se pudo iniciar sesión.';
+    } finally {
+      this.loading = false;
+    }
+  }
+}
