@@ -8,13 +8,23 @@ import { FooterComponent } from "../../shared/ui/footer/footer.component";
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, FooterComponent],
   template: `
-  <app-navbar></app-navbar>
+    <div class="min-h-screen bg-[#05010A] text-white relative overflow-hidden">
 
-    <main class="min-h-screen bg-[#05010A] text-white pt-20">
-      <router-outlet></router-outlet>
-    </main>
+      <div class="pointer-events-none absolute inset-0
+      bg-[radial-gradient(circle_at_top_left,rgba(0,229,255,0.08),transparent_28%),
+           radial-gradient(circle_at_top_right,rgba(255,44,223,0.08),transparent_28%),
+           radial-gradient(circle_at_bottom_left,rgba(124,58,237,0.06),transparent_30%)]">
+      </div>
 
-    <lagun-footer></lagun-footer>
+      <app-navbar></app-navbar>
+
+      <main class="relative min-h-screen pt-20">
+        <router-outlet></router-outlet>
+      </main>
+
+      <lagun-footer></lagun-footer>
+
+    </div>
   `,
 })
 export class PublicLayoutComponent {}

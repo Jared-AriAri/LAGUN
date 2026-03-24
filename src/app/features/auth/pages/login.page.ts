@@ -1,15 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.page.html',
-  styleUrls: ['./login.page.css'],
 })
 export class LoginPage {
   email = '';
@@ -17,7 +16,7 @@ export class LoginPage {
   loading = false;
   errorMsg = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   async submit() {
     this.errorMsg = '';
@@ -25,11 +24,17 @@ export class LoginPage {
 
     try {
       await this.auth.signIn(this.email.trim(), this.password);
-
-      await this.auth.refreshRole?.();
+      await this.auth.refreshRole();
 
       const role = this.auth.roleSnapshot();
-      this.router.navigate([role === 'editor' ? '/admin' : '/']);
+      const redirectUrl = localStorage.getItem('redirectUrl');
+      localStorage.removeItem('redirectUrl');
+
+      if (redirectUrl && redirectUrl !== '/login') {
+        this.router.navigateByUrl(redirectUrl);
+      } else {
+        this.router.navigate([role === 'admin' || role === 'writer' ? '/admin' : '/']);
+      }
     } catch (e: any) {
       this.errorMsg = e?.message ?? 'No se pudo iniciar sesión.';
     } finally {

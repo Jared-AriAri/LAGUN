@@ -7,27 +7,31 @@ export const routes: Routes = [
     path: "",
     component: PublicLayoutComponent,
     children: [
-      { 
-        path: "", 
-        loadComponent: () => 
-          import("./features/landing/pages/landing.page").then((m) => m.LandingPage) 
+      {
+        path: "",
+        loadComponent: () =>
+          import("./features/landing/pages/landing.page").then((m) => m.LandingPage),
       },
-      { 
-        path: "news", 
-        loadComponent: () => 
-          import("./features/news/pages/news-list.page").then((m) => m.NewsListPage) 
+      {
+        path: "news",
+        loadComponent: () =>
+          import("./features/news/pages/news-list.page").then((m) => m.NewsListPage),
       },
-      { 
-        path: "reviews", 
-        loadComponent: () => 
-          import("./features/reviews/pages/reviews-list.page").then((m) => m.ReviewsListPage) 
+      {
+        path: "reviews",
+        loadComponent: () =>
+          import("./features/reviews/pages/reviews-list.page").then((m) => m.ReviewsListPage),
       },
-      { 
-        path: "login", 
-        loadComponent: () => 
-          import("./features/auth/pages/login.page").then((m) => m.LoginPage) 
+      {
+        path: "login",
+        loadComponent: () =>
+          import("./features/auth/pages/login.page").then((m) => m.LoginPage),
       },
-
+      {
+        path: "register",
+        loadComponent: () =>
+          import("./features/auth/pages/register.page").then((m) => m.RegisterPage),
+      },
       {
         path: "terminos",
         loadComponent: () =>
@@ -38,13 +42,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import("./features/legal/pages/privacy.page").then((m) => m.PrivacyPage),
       },
-
       {
         path: "admin",
         canActivate: [AdminGuard],
         loadComponent: () =>
-          import("./features/admin/dashboard/admin-dashboard.page")
-            .then((m) => m.AdminDashboardPage),
+          import("./features/admin/dashboard/admin-dashboard.page").then(
+            (m) => m.AdminDashboardPage
+          ),
       },
     ],
   },

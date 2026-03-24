@@ -1,10 +1,13 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService, Profile } from '../../../core/auth/auth.service';
 
-type NavLink = { label: string; path: string };
+type NavLink = {
+  label: string;
+  path: string;
+};
 
 @Component({
   selector: 'app-navbar',
@@ -13,41 +16,64 @@ type NavLink = { label: string; path: string };
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  links: NavLink[] = [
-    { label: 'Noticias', path: '/news' },
-    { label: 'Reseñas', path: '/reviews' },
-    { label: 'Lanzamientos', path: '/news' },
-    { label: 'Trailers', path: '/news' },
-    { label: 'Contacto', path: '/' },
-  ];
-
+  ready = false;
   loggedIn = false;
   profile: Profile | null = null;
 
+  links: NavLink[] = [
+    { label: 'Noticias', path: '/news' },
+    { label: 'Reseñas', path: '/reviews' },
+  ];
+
   private sub = new Subscription();
   private mobile = false;
+  profileMenuOpen = false;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   ngOnInit() {
-    this.loggedIn = this.auth.isLoggedInSnapshot();
-    this.profile = this.auth.profileSnapshot();
+    this.syncState();
 
     this.sub.add(
-      this.auth.sessionChanges().subscribe((s) => {
-        this.loggedIn = !!s?.user?.id;
+      this.auth.readyChanges().subscribe((ready) => {
+        this.ready = ready;
+        if (ready) {
+          this.syncState();
+        }
       })
     );
 
     this.sub.add(
-      this.auth.profileChanges().subscribe((p) => {
-        this.profile = p;
+      this.auth.sessionChanges().subscribe((session) => {
+        this.loggedIn = !!session?.user?.id;
+        if (!this.loggedIn) {
+          this.profileMenuOpen = false;
+        }
+      })
+    );
+
+    this.sub.add(
+      this.auth.profileChanges().subscribe((profile) => {
+        this.profile = profile;
       })
     );
   }
 
   ngOnDestroy() {
     this.sub.unsubscribe();
+  }
+
+  @HostListener('document:click')
+  closeProfileMenuFromOutside() {
+    if (this.profileMenuOpen) {
+      this.profileMenuOpen = false;
+    }
+  }
+
+  private syncState() {
+    this.ready = this.auth.isReadySnapshot();
+    this.loggedIn = this.auth.isLoggedInSnapshot();
+    this.profile = this.auth.profileSnapshot();
   }
 
   mobileOpen(): boolean {
@@ -64,12 +90,53 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   goLogin() {
     this.closeMobile();
+    localStorage.setItem('redirectUrl', this.router.url);
     this.router.navigate(['/login']);
+  }
+
+  toggleProfileMenu(event: MouseEvent) {
+    event.stopPropagation();
+    this.profileMenuOpen = !this.profileMenuOpen;
+  }
+
+  closeProfileMenu(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.profileMenuOpen = false;
+  }
+
+  goToUser(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.profileMenuOpen = false;
+    this.closeMobile();
+    this.router.navigate(['/mi-cuenta']);
+  }
+
+  goToWriterPanel(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.profileMenuOpen = false;
+    this.closeMobile();
+    this.router.navigate(['/writer']);
+  }
+
+  goToAdminPanel(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.profileMenuOpen = false;
+    this.closeMobile();
+    this.router.navigate(['/admin']);
+  }
+
+  goToReviewsPanel(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.profileMenuOpen = false;
+    this.closeMobile();
+    this.router.navigate(['/reviews-panel']);
   }
 
   async logout() {
     await this.auth.signOut();
+    this.profileMenuOpen = false;
     this.closeMobile();
+    localStorage.removeItem('redirectUrl');
     this.router.navigate(['/']);
   }
 
@@ -78,11 +145,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return (name?.[0] || 'U').toUpperCase();
   }
 
-  get isAdmin(): boolean {
-    return this.profile?.role === 'admin';
+  get role(): 'reader' | 'writer' | 'admin' {
+    const role = this.profile?.role;
+    if (role === 'writer' || role === 'admin') return role;
+    return 'reader';
   }
 
-  get isEditorOrAdmin(): boolean {
-    return this.profile?.role === 'editor' || this.profile?.role === 'admin';
+  get canSeeWriterPanel(): boolean {
+    return this.role === 'writer';
+  }
+
+  get canSeeAdminPanel(): boolean {
+    return this.role === 'admin';
+  }
+
+  get canSeeReviewsPanel(): boolean {
+    return this.role === 'writer' || this.role === 'admin';
   }
 }
