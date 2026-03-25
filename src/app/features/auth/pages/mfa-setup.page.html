@@ -1,0 +1,36 @@
+<div class="auth-card auth-card--premium">
+    <div class="auth-card__header">
+        <h1>Activar autenticación en 2 pasos</h1>
+        <p>Escanea el código QR con tu app autenticadora</p>
+    </div>
+
+    <div *ngIf="errorMsg" class="auth-alert auth-alert--error">
+        {{ errorMsg }}
+    </div>
+
+    <div *ngIf="successMsg" class="auth-alert auth-alert--success">
+        {{ successMsg }}
+    </div>
+
+    <button type="button" (click)="startSetup()" [disabled]="loading || !!factorId">
+        {{ loading ? 'Generando...' : 'Generar QR' }}
+    </button>
+
+    <div *ngIf="qrCode" class="mfa-box">
+        <img [src]="qrCode" alt="QR MFA" />
+        <div class="mfa-box__meta">
+            <p><strong>Secreto:</strong> {{ secret }}</p>
+            <p><strong>URI:</strong> {{ uri }}</p>
+        </div>
+
+        <div class="auth-field">
+            <label for="mfaCode">Código de verificación</label>
+            <input id="mfaCode" name="mfaCode" type="text" [(ngModel)]="code"
+                placeholder="Ingresa el código de 6 dígitos" />
+        </div>
+
+        <button type="button" (click)="verify()" [disabled]="verifying || !code.trim()">
+            {{ verifying ? 'Verificando...' : 'Confirmar MFA' }}
+        </button>
+    </div>
+</div>

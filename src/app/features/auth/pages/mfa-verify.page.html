@@ -1,0 +1,22 @@
+<div class="auth-card auth-card--premium">
+    <div class="auth-card__header">
+        <h1>Verificación en 2 pasos</h1>
+        <p>Ingresa el código de tu app autenticadora</p>
+    </div>
+
+    <form (ngSubmit)="submit()" class="auth-form">
+        <div class="auth-field">
+            <label for="verifyCode">Código</label>
+            <input id="verifyCode" name="verifyCode" type="text" [(ngModel)]="code" placeholder="Código de 6 dígitos"
+                required />
+        </div>
+
+        <div *ngIf="errorMsg" class="auth-alert auth-alert--error">
+            {{ errorMsg }}
+        </div>
+
+        <button type="submit" [disabled]="loading || !code.trim()">
+            {{ loading ? 'Verificando...' : 'Verificar' }}
+        </button>
+    </form>
+</div>

@@ -6,32 +6,14 @@
     <form (ngSubmit)="submit()" #f="ngForm" class="auth-form">
 
       <label class="auth-label">Email</label>
-      <input
-        class="auth-input"
-        name="email"
-        [(ngModel)]="email"
-        type="email"
-        required
-        autocomplete="email"
-        placeholder="tu@email.com"
-      />
+      <input class="auth-input" name="email" [(ngModel)]="email" type="email" required autocomplete="email"
+        placeholder="tu@email.com" />
 
       <label class="auth-label">Contraseña</label>
-      <input
-        class="auth-input"
-        name="password"
-        [(ngModel)]="password"
-        type="password"
-        required
-        autocomplete="current-password"
-        placeholder="••••••••"
-      />
+      <input class="auth-input" name="password" [(ngModel)]="password" type="password" required
+        autocomplete="current-password" placeholder="••••••••" />
 
-      <button
-        class="auth-button"
-        type="submit"
-        [disabled]="loading || !f.valid"
-      >
+      <button class="auth-button" type="submit" [disabled]="loading || !f.valid">
         {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
 

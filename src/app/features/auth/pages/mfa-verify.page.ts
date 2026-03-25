@@ -5,33 +5,24 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
-  selector: 'app-login-page',
+  selector: 'app-mfa-verify-page',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './login.page.html',
+  templateUrl: './mfa-verify.page.html',
 })
-export class LoginPage {
-  email = '';
-  password = '';
+export class MfaVerifyPage {
+  code = '';
   loading = false;
   errorMsg = '';
 
   constructor(private auth: AuthService, private router: Router) { }
 
   async submit() {
-    this.errorMsg = '';
     this.loading = true;
+    this.errorMsg = '';
 
     try {
-      await this.auth.signIn(this.email.trim(), this.password);
-
-      const aal = await this.auth.getAuthenticatorAssuranceLevel();
-
-      if (aal.nextLevel === 'aal2') {
-        this.router.navigate(['/mfa/verify']);
-        return;
-      }
-
+      await this.auth.verifyTotpLogin(this.code);
       await this.auth.refreshRole();
 
       const role = this.auth.roleSnapshot();
@@ -41,10 +32,12 @@ export class LoginPage {
       if (redirectUrl && redirectUrl !== '/login') {
         this.router.navigateByUrl(redirectUrl);
       } else {
-        this.router.navigate([role === 'admin' || role === 'writer' ? '/admin' : '/']);
+        this.router.navigate([
+          role === 'admin' || role === 'writer' ? '/admin' : '/',
+        ]);
       }
     } catch (e: any) {
-      this.errorMsg = e?.message ?? 'No se pudo iniciar sesión.';
+      this.errorMsg = e?.message ?? 'Código inválido.';
     } finally {
       this.loading = false;
     }

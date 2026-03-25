@@ -14,10 +14,6 @@
         </div>
 
         <div class="hidden md:flex flex-col">
-          <span
-            class="text-sm font-bold tracking-[0.28em] bg-gradient-to-r from-cyan-300 via-white to-fuchsia-400 bg-clip-text text-transparent">
-            LAGUN
-          </span>
           <span class="text-[10px] tracking-[0.35em] text-white/45">
             NOTICIAS • REVIEWS • GAMING
           </span>
@@ -31,7 +27,7 @@
         </a>
       </div>
 
-      <div class="hidden md:flex items-center gap-3" *ngIf="ready">
+      <div class="hidden md:flex items-center gap-3">
         <a routerLink="/news"
           class="relative overflow-hidden px-5 py-2.5 rounded-full text-sm font-semibold text-white border border-fuchsia-400/20 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 shadow-[0_0_28px_rgba(255,44,223,0.35)] hover:shadow-[0_0_36px_rgba(0,229,255,0.28)] hover:scale-[1.03] active:scale-[0.99] transition">
           <span
@@ -103,7 +99,7 @@
       <button type="button"
         class="md:hidden inline-flex items-center justify-center rounded-xl p-2 text-white/80 border border-cyan-400/15 bg-white/5 shadow-[0_0_18px_rgba(0,229,255,0.10)] hover:bg-white/10 hover:border-cyan-300/30 transition"
         (click)="toggleMobile()" aria-label="Abrir menú">
-        <span class="text-lg">{{ mobileOpen() ? "✕" : "☰" }}</span>
+        <span class="text-lg">{{ mobileOpen() ? '✕' : '☰' }}</span>
       </button>
     </div>
 
@@ -120,7 +116,7 @@
             {{ l.label }}
           </a>
 
-          <div class="mt-2 pt-3 border-t border-white/10 space-y-2" *ngIf="ready">
+          <div class="mt-2 pt-3 border-t border-white/10 space-y-2">
             <a routerLink="/news" (click)="closeMobile()"
               class="block text-center px-4 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 shadow-[0_0_24px_rgba(255,44,223,0.28)] hover:scale-[1.01] active:scale-[0.99] transition">
               Explorar

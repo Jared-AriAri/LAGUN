@@ -18,7 +18,7 @@ export class RegisterPage {
   errorMsg = '';
   successMsg = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   async submit() {
     this.errorMsg = '';
@@ -26,14 +26,20 @@ export class RegisterPage {
     this.loading = true;
 
     try {
-      await this.auth.signUp(
+      const response = await this.auth.signUp(
         this.email.trim(),
         this.password,
         this.fullName.trim()
       );
 
-      this.successMsg = 'Cuenta creada correctamente.';
-      this.router.navigate(['/login']);
+      if (response.user && !response.session) {
+        this.router.navigate(['/confirm-email'], {
+          queryParams: { email: this.email.trim() }
+        });
+      } else {
+        this.successMsg = '¡Cuenta creada con éxito!';
+        this.router.navigate(['/login']);
+      }
     } catch (e: any) {
       this.errorMsg = e?.message ?? 'No se pudo crear la cuenta.';
     } finally {

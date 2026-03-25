@@ -32,14 +32,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(private auth: AuthService, private router: Router) { }
 
   ngOnInit() {
-    this.syncState();
+    this.ready = this.auth.isReadySnapshot();
+    this.loggedIn = this.auth.isLoggedInSnapshot();
+    this.profile = this.auth.profileSnapshot();
 
     this.sub.add(
       this.auth.readyChanges().subscribe((ready) => {
         this.ready = ready;
-        if (ready) {
-          this.syncState();
-        }
       })
     );
 
@@ -70,12 +69,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  private syncState() {
-    this.ready = this.auth.isReadySnapshot();
-    this.loggedIn = this.auth.isLoggedInSnapshot();
-    this.profile = this.auth.profileSnapshot();
-  }
-
   mobileOpen(): boolean {
     return this.mobile;
   }
@@ -90,7 +83,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   goLogin() {
     this.closeMobile();
-    localStorage.setItem('redirectUrl', this.router.url);
     this.router.navigate(['/login']);
   }
 
@@ -136,7 +128,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     await this.auth.signOut();
     this.profileMenuOpen = false;
     this.closeMobile();
-    localStorage.removeItem('redirectUrl');
     this.router.navigate(['/']);
   }
 

@@ -33,6 +33,26 @@ export const routes: Routes = [
           import("./features/auth/pages/register.page").then((m) => m.RegisterPage),
       },
       {
+        path: "confirm-email",
+        loadComponent: () =>
+          import("./features/auth/pages/confirm-email.page").then((m) => m.ConfirmEmailPage),
+      },
+      {
+        path: "mfa/setup",
+        loadComponent: () =>
+          import("./features/auth/pages/mfa-setup.page").then((m) => m.MfaSetupPage),
+      },
+      {
+        path: "mfa/verify",
+        loadComponent: () =>
+          import("./features/auth/pages/mfa-verify.page").then((m) => m.MfaVerifyPage),
+      },
+      {
+        path: "security",
+        loadComponent: () =>
+          import("./features/auth/pages/security.page").then((m) => m.SecurityPage),
+      },
+      {
         path: "terminos",
         loadComponent: () =>
           import("./features/legal/pages/terms.page").then((m) => m.TermsPage),

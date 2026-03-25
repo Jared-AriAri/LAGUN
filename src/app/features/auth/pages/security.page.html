@@ -1,0 +1,28 @@
+<div class="auth-card auth-card--premium">
+    <div class="auth-card__header">
+        <h1>Seguridad</h1>
+        <p>Gestiona tu autenticación en dos pasos</p>
+    </div>
+
+    <div *ngIf="errorMsg" class="auth-alert auth-alert--error">
+        {{ errorMsg }}
+    </div>
+
+    <div *ngIf="successMsg" class="auth-alert auth-alert--success">
+        {{ successMsg }}
+    </div>
+
+    <div *ngIf="hasTotp; else disabledBlock" class="security-state">
+        <p>La autenticación en 2 pasos está activada.</p>
+        <button type="button" (click)="disableMfa()" [disabled]="loading">
+            {{ loading ? 'Procesando...' : 'Desactivar MFA' }}
+        </button>
+    </div>
+
+    <ng-template #disabledBlock>
+        <div class="security-state">
+            <p>La autenticación en 2 pasos no está activada.</p>
+            <a routerLink="/mfa/setup">Activar MFA</a>
+        </div>
+    </ng-template>
+</div>
