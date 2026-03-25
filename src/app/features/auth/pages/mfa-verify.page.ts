@@ -27,6 +27,7 @@ export class MfaVerifyPage {
       this.router.navigate([role === 'admin' || role === 'writer' ? '/admin' : '/']);
     } catch (e: any) {
       this.error = 'Código de verificación inválido.';
+      console.error('MFA Login Error:', e);
     } finally {
       this.loading = false;
     }

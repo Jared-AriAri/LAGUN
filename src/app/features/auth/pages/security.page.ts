@@ -19,17 +19,24 @@ export class SecurityPage implements OnInit {
     }
 
     async disableMfa() {
-        if (!confirm('¿Estás seguro de que deseas desactivar el segundo factor de seguridad?')) return;
+        const confirmed = confirm(
+            '⚠️ ATENCIÓN: Al desactivar el MFA, tu cuenta será menos segura. ¿Deseas continuar?'
+        );
+
+        if (!confirmed) return;
 
         try {
             const factors = await this.auth.listMfaFactors();
             const factor = factors.find(f => f.status === 'verified');
+
             if (factor) {
                 await this.auth.unenrollFactor(factor.id);
                 this.isMfaActive = false;
+                alert('Seguridad MFA desactivada correctamente.');
             }
         } catch (e: any) {
-            alert('Error al desactivar MFA');
+            console.error('Error disabling MFA:', e);
+            alert('Error al intentar desactivar el factor de seguridad.');
         }
     }
 }

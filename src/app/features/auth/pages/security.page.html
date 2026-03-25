@@ -1,28 +1,64 @@
-<div class="max-w-2xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-8 text-gray-900">Configuración de Seguridad</h1>
-
-    <div class="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between">
-        <div class="flex-1 pr-4">
-            <h3 class="font-bold text-lg text-gray-800">Autenticación de dos factores (MFA)</h3>
-            <p class="text-gray-500 text-sm mt-1">
-                {{ isMfaActive ? 'Tu cuenta está protegida con una aplicación autenticadora.' : 'Añade una capa extra de
-                seguridad usando una aplicación como Google Authenticator.' }}
-            </p>
+<div class="min-h-[80vh] py-12 px-6">
+    <div class="max-w-3xl mx-auto">
+        <div class="relative mb-12">
+            <h1 class="text-4xl font-black text-white tracking-tight">
+                Configuración de <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500">Seguridad</span>
+            </h1>
+            <p class="text-white/40 mt-2 uppercase tracking-[0.3em] text-[10px]">Protección de cuenta Lagun</p>
+            <div
+                class="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-cyan-500 to-fuchsia-500 rounded-full shadow-[0_0_15px_rgba(0,229,255,0.5)]">
+            </div>
         </div>
 
-        <div class="flex items-center shrink-0">
-            <span *ngIf="isMfaActive"
-                class="mr-4 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200">ACTIVO</span>
+        <div class="relative group">
+            <div
+                class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-fuchsia-500/20 rounded-[2.5rem] blur opacity-75 group-hover:opacity-100 transition duration-500">
+            </div>
 
-            <button *ngIf="!isMfaActive" routerLink="/mfa/setup"
-                class="bg-black text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors">
-                Configurar
-            </button>
+            <div
+                class="relative bg-[#0A0712]/80 backdrop-blur-2xl border border-white/10 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
 
-            <button *ngIf="isMfaActive" (click)="disableMfa()"
-                class="text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
-                Desactivar
-            </button>
+                <div class="flex-1 space-y-3 text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start gap-3">
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/10">
+                            <span class="text-xl">🛡️</span>
+                        </div>
+                        <h3 class="font-bold text-xl text-white tracking-wide">Doble Factor (MFA)</h3>
+                    </div>
+
+                    <p class="text-white/50 text-sm leading-relaxed max-w-md">
+                        {{ isMfaActive
+                        ? 'Tu acceso está blindado con una capa adicional de seguridad biométrica o por aplicación.'
+                        : 'Evita accesos no autorizados vinculando tu cuenta con Google Authenticator o Authy.'
+                        }}
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4 shrink-0">
+                    <div *ngIf="isMfaActive"
+                        class="flex items-center gap-2 px-4 py-2 bg-cyan-400/10 border border-cyan-400/20 rounded-full shadow-[0_0_15px_rgba(34,211,238,0.1)]">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                        <span class="text-cyan-400 text-xs font-black uppercase tracking-widest">Protegido</span>
+                    </div>
+
+                    <button *ngIf="!isMfaActive" routerLink="/mfa/setup"
+                        class="relative overflow-hidden px-8 py-3 rounded-2xl font-bold text-white bg-gradient-to-r from-fuchsia-600 to-violet-600 shadow-[0_0_20px_rgba(192,38,211,0.3)] hover:shadow-[0_0_30px_rgba(192,38,211,0.5)] hover:scale-105 active:scale-95 transition-all">
+                        <span class="relative">Activar</span>
+                    </button>
+
+                    <button *ngIf="isMfaActive" (click)="disableMfa()"
+                        class="px-6 py-3 rounded-2xl text-xs font-bold text-fuchsia-400 border border-fuchsia-500/20 bg-fuchsia-500/5 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/40 transition-all uppercase tracking-widest">
+                        Desactivar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12 p-6 rounded-2xl border border-white/5 bg-white/[0.02] text-center">
+            <p class="text-white/20 text-[11px] uppercase tracking-[0.4em]">
+                Sesión validada por Lagun Auth Guard • Nivel {{ isMfaActive ? 'AAL2' : 'AAL1' }}
+            </p>
         </div>
     </div>
 </div>

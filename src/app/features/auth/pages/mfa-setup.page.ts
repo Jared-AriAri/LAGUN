@@ -27,7 +27,8 @@ export class MfaSetupPage {
             this.qrCode = result.qrCode;
             this.factorId = result.factorId;
         } catch (e: any) {
-            this.error = e.message;
+            this.error = e.message || 'Error al conectar con Supabase';
+            console.error('MFA Enrollment Error:', e);
         } finally {
             this.loading = false;
         }
@@ -40,7 +41,8 @@ export class MfaSetupPage {
             await this.auth.verifyTotpEnrollment(this.factorId, this.verifyCode);
             this.router.navigate(['/security']);
         } catch (e: any) {
-            this.error = 'El código es incorrecto o ha expirado.';
+            this.error = 'Código incorrecto. Intenta de nuevo.';
+            console.error('MFA Verification Error:', e);
         } finally {
             this.loading = false;
         }
