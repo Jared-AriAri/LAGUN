@@ -4,56 +4,32 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
-    selector: 'app-security-page',
+    selector: 'app-security',
     standalone: true,
     imports: [CommonModule, RouterModule],
-    templateUrl: './security.page.html',
+    templateUrl: './security.page.html'
 })
 export class SecurityPage implements OnInit {
-    loading = false;
-    errorMsg = '';
-    successMsg = '';
-    hasTotp = false;
-    factorId = '';
+    isMfaActive = false;
 
     constructor(private auth: AuthService) { }
 
     async ngOnInit() {
-        await this.load();
-    }
-
-    async load() {
-        this.loading = true;
-        this.errorMsg = '';
-
-        try {
-            const factors = await this.auth.listMfaFactors();
-            const totp = factors.find(
-                (factor) => factor.factor_type === 'totp' && factor.status === 'verified'
-            );
-
-            this.hasTotp = !!totp;
-            this.factorId = totp?.id ?? '';
-        } catch (e: any) {
-            this.errorMsg = e?.message ?? 'No se pudo cargar MFA.';
-        } finally {
-            this.loading = false;
-        }
+        this.isMfaActive = await this.auth.hasVerifiedTotpFactor();
     }
 
     async disableMfa() {
-        this.loading = true;
-        this.errorMsg = '';
-        this.successMsg = '';
+        if (!confirm('¿Estás seguro de que deseas desactivar el segundo factor de seguridad?')) return;
 
         try {
-            await this.auth.unenrollFactor(this.factorId);
-            this.successMsg = 'MFA desactivado correctamente.';
-            await this.load();
+            const factors = await this.auth.listMfaFactors();
+            const factor = factors.find(f => f.status === 'verified');
+            if (factor) {
+                await this.auth.unenrollFactor(factor.id);
+                this.isMfaActive = false;
+            }
         } catch (e: any) {
-            this.errorMsg = e?.message ?? 'No se pudo desactivar MFA.';
-        } finally {
-            this.loading = false;
+            alert('Error al desactivar MFA');
         }
     }
 }

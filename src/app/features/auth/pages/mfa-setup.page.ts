@@ -1,59 +1,48 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
-    selector: 'app-mfa-setup-page',
+    selector: 'app-mfa-setup',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule],
-    templateUrl: './mfa-setup.page.html',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './mfa-setup.page.html'
 })
 export class MfaSetupPage {
-    loading = false;
-    verifying = false;
-    errorMsg = '';
-    successMsg = '';
-    factorId = '';
     qrCode = '';
-    secret = '';
-    uri = '';
-    code = '';
+    factorId = '';
+    verifyCode = '';
+    error = '';
+    loading = false;
 
     constructor(private auth: AuthService, private router: Router) { }
 
-    async startSetup() {
+    async startEnroll() {
         this.loading = true;
-        this.errorMsg = '';
-        this.successMsg = '';
-
+        this.error = '';
         try {
-            const result = await this.auth.enrollTotp('Seguridad principal');
-            this.factorId = result.factorId;
+            const result = await this.auth.enrollTotp('Lagun');
             this.qrCode = result.qrCode;
-            this.secret = result.secret;
-            this.uri = result.uri;
+            this.factorId = result.factorId;
         } catch (e: any) {
-            this.errorMsg = e?.message ?? 'No se pudo iniciar la configuración MFA.';
+            this.error = e.message;
         } finally {
             this.loading = false;
         }
     }
 
-    async verify() {
-        this.verifying = true;
-        this.errorMsg = '';
-        this.successMsg = '';
-
+    async confirmEnroll() {
+        this.loading = true;
+        this.error = '';
         try {
-            await this.auth.verifyTotpEnrollment(this.factorId, this.code);
-            this.successMsg = 'Autenticación en dos pasos activada correctamente.';
+            await this.auth.verifyTotpEnrollment(this.factorId, this.verifyCode);
             this.router.navigate(['/security']);
         } catch (e: any) {
-            this.errorMsg = e?.message ?? 'No se pudo verificar el código.';
+            this.error = 'El código es incorrecto o ha expirado.';
         } finally {
-            this.verifying = false;
+            this.loading = false;
         }
     }
 }

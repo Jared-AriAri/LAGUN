@@ -1,6 +1,7 @@
 import { Routes } from "@angular/router";
 import { PublicLayoutComponent } from "./layouts/public-layout/public-layout.component";
 import { AdminGuard } from "./core/auth/admin.guard";
+import { mfaGuard } from "./core/auth/mfa.guard";
 
 export const routes: Routes = [
   {
@@ -39,6 +40,7 @@ export const routes: Routes = [
       },
       {
         path: "mfa/setup",
+        canActivate: [mfaGuard],
         loadComponent: () =>
           import("./features/auth/pages/mfa-setup.page").then((m) => m.MfaSetupPage),
       },
@@ -49,6 +51,7 @@ export const routes: Routes = [
       },
       {
         path: "security",
+        canActivate: [mfaGuard],
         loadComponent: () =>
           import("./features/auth/pages/security.page").then((m) => m.SecurityPage),
       },
@@ -64,7 +67,7 @@ export const routes: Routes = [
       },
       {
         path: "admin",
-        canActivate: [AdminGuard],
+        canActivate: [AdminGuard, mfaGuard],
         loadComponent: () =>
           import("./features/admin/dashboard/admin-dashboard.page").then(
             (m) => m.AdminDashboardPage

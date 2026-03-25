@@ -103,6 +103,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/mi-cuenta']);
   }
 
+  goToSecurity(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.profileMenuOpen = false;
+    this.closeMobile();
+    this.router.navigate(['/security']);
+  }
+
   goToWriterPanel(event?: MouseEvent) {
     event?.stopPropagation();
     this.profileMenuOpen = false;

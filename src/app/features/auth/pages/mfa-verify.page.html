@@ -1,22 +1,22 @@
-<div class="auth-card auth-card--premium">
-    <div class="auth-card__header">
-        <h1>Verificación en 2 pasos</h1>
-        <p>Ingresa el código de tu app autenticadora</p>
-    </div>
+<div class="flex items-center justify-center min-h-screen bg-gray-50 p-6">
+    <div class="max-w-md w-full p-8 bg-white rounded-2xl shadow-xl border border-gray-100 text-center">
+        <div class="text-4xl mb-4">🛡️</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Verificación de seguridad</h2>
+        <p class="text-gray-500 mb-8">Ingresa el código de tu aplicación autenticadora para continuar.</p>
 
-    <form (ngSubmit)="submit()" class="auth-form">
-        <div class="auth-field">
-            <label for="verifyCode">Código</label>
-            <input id="verifyCode" name="verifyCode" type="text" [(ngModel)]="code" placeholder="Código de 6 dígitos"
-                required />
-        </div>
+        <input [(ngModel)]="code" maxlength="6" (keyup.enter)="verify()"
+            class="w-full p-4 border-2 border-gray-100 rounded-2xl mb-6 text-center text-4xl tracking-[0.4em] font-bold focus:border-black transition-all outline-none"
+            placeholder="000000" autofocus>
 
-        <div *ngIf="errorMsg" class="auth-alert auth-alert--error">
-            {{ errorMsg }}
-        </div>
-
-        <button type="submit" [disabled]="loading || !code.trim()">
-            {{ loading ? 'Verificando...' : 'Verificar' }}
+        <button (click)="verify()" [disabled]="code.length !== 6 || loading"
+            class="w-full bg-black text-white py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-50">
+            {{ loading ? 'Verificando...' : 'Confirmar' }}
         </button>
-    </form>
+
+        <p *ngIf="error" class="mt-4 text-red-500 font-medium">{{ error }}</p>
+
+        <button routerLink="/login" class="mt-8 text-sm text-gray-400 hover:text-gray-600 underline">
+            Cerrar sesión e intentar de nuevo
+        </button>
+    </div>
 </div>

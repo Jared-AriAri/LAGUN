@@ -27,14 +27,14 @@ export class LoginPage {
 
       const aal = await this.auth.getAuthenticatorAssuranceLevel();
 
-      if (aal.nextLevel === 'aal2') {
+      if (aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
         this.router.navigate(['/mfa/verify']);
         return;
       }
 
       await this.auth.refreshRole();
-
       const role = this.auth.roleSnapshot();
+
       const redirectUrl = localStorage.getItem('redirectUrl');
       localStorage.removeItem('redirectUrl');
 
@@ -43,6 +43,7 @@ export class LoginPage {
       } else {
         this.router.navigate([role === 'admin' || role === 'writer' ? '/admin' : '/']);
       }
+
     } catch (e: any) {
       this.errorMsg = e?.message ?? 'No se pudo iniciar sesión.';
     } finally {

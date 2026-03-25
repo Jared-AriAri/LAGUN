@@ -1,28 +1,28 @@
-<div class="auth-card auth-card--premium">
-    <div class="auth-card__header">
-        <h1>Seguridad</h1>
-        <p>Gestiona tu autenticación en dos pasos</p>
-    </div>
+<div class="max-w-2xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-8 text-gray-900">Configuración de Seguridad</h1>
 
-    <div *ngIf="errorMsg" class="auth-alert auth-alert--error">
-        {{ errorMsg }}
-    </div>
-
-    <div *ngIf="successMsg" class="auth-alert auth-alert--success">
-        {{ successMsg }}
-    </div>
-
-    <div *ngIf="hasTotp; else disabledBlock" class="security-state">
-        <p>La autenticación en 2 pasos está activada.</p>
-        <button type="button" (click)="disableMfa()" [disabled]="loading">
-            {{ loading ? 'Procesando...' : 'Desactivar MFA' }}
-        </button>
-    </div>
-
-    <ng-template #disabledBlock>
-        <div class="security-state">
-            <p>La autenticación en 2 pasos no está activada.</p>
-            <a routerLink="/mfa/setup">Activar MFA</a>
+    <div class="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between">
+        <div class="flex-1 pr-4">
+            <h3 class="font-bold text-lg text-gray-800">Autenticación de dos factores (MFA)</h3>
+            <p class="text-gray-500 text-sm mt-1">
+                {{ isMfaActive ? 'Tu cuenta está protegida con una aplicación autenticadora.' : 'Añade una capa extra de
+                seguridad usando una aplicación como Google Authenticator.' }}
+            </p>
         </div>
-    </ng-template>
+
+        <div class="flex items-center shrink-0">
+            <span *ngIf="isMfaActive"
+                class="mr-4 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200">ACTIVO</span>
+
+            <button *ngIf="!isMfaActive" routerLink="/mfa/setup"
+                class="bg-black text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors">
+                Configurar
+            </button>
+
+            <button *ngIf="isMfaActive" (click)="disableMfa()"
+                class="text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+                Desactivar
+            </button>
+        </div>
+    </div>
 </div>
