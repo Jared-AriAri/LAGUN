@@ -169,14 +169,20 @@ export class AuthService {
   }
 
   async signOut() {
-    await this.supa.supabase.auth.signOut();
-    this.session$.next(null);
-    this.role$.next('reader');
-    this.profile$.next(null);
+    try {
+      await this.supa.supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Logout failed on server', e);
+    } finally {
+      this.session$.next(null);
+      this.role$.next('reader');
+      this.profile$.next(null);
+    }
   }
 
   async refreshRole(): Promise<Profile | null> {
-    return await this.refreshFromSession(this.sessionSnapshot());
+    const { data: { session } } = await this.supa.supabase.auth.getSession();
+    return await this.refreshFromSession(session);
   }
 
   async resendConfirmationEmail(email: string) {
@@ -240,25 +246,40 @@ export class AuthService {
   }
 
   async verifyTotpEnrollment(factorId: string, code: string) {
+    console.log('[Servicio] 1. Iniciando challenge...');
+    const cleanCode = code.replace(/\D/g, '');
+
     const { data: challengeData, error: challengeError } =
       await this.supa.supabase.auth.mfa.challenge({ factorId });
 
-    if (challengeError) throw new Error(challengeError.message);
+    if (challengeError) {
+      console.error('[Servicio] Error en challenge:', challengeError);
+      throw challengeError;
+    }
+    console.log('[Servicio] 2. Challenge ok:', challengeData.id);
 
-    const cleanCode = code.replace(/\s+/g, '');
-
+    console.log('[Servicio] 3. Verificando código...');
     const { data, error } = await this.supa.supabase.auth.mfa.verify({
       factorId,
       challengeId: challengeData.id,
       code: cleanCode,
     });
 
-    if (error) throw new Error('Código MFA inválido.');
+    if (error) {
+      console.error('[Servicio] Error en verify:', error);
+      throw error;
+    }
+    console.log('[Servicio] 4. Verify ok. Refrescando sesión...');
 
-    const { data: sessionData } = await this.supa.supabase.auth.getSession();
-    this.session$.next(sessionData.session ?? null);
-    await this.refreshFromSession(sessionData.session ?? null);
-    return data;
+    const { data: sessionData, error: refreshError } = await this.supa.supabase.auth.refreshSession();
+    if (refreshError) {
+      console.error('[Servicio] Error en refreshSession:', refreshError);
+      throw refreshError;
+    }
+
+    console.log('[Servicio] 5. Sesión ok. Actualizando perfil...');
+    this.session$.next(sessionData.session);
+    return await this.refreshFromSession(sessionData.session);
   }
 
   async verifyTotpLogin(code: string) {
@@ -267,19 +288,20 @@ export class AuthService {
 
     if (!factor) throw new Error('No hay un factor TOTP verificado.');
 
-    const cleanCode = code.replace(/\s+/g, '');
+    const cleanCode = code.replace(/\D/g, '');
 
     const { data, error } = await this.supa.supabase.auth.mfa.challengeAndVerify({
       factorId: factor.id,
       code: cleanCode,
     });
 
-    if (error) throw new Error('Código MFA inválido.');
+    if (error) throw new Error(error.message || 'Código MFA inválido.');
 
-    const { data: sessionData } = await this.supa.supabase.auth.getSession();
-    this.session$.next(sessionData.session ?? null);
-    await this.refreshFromSession(sessionData.session ?? null);
-    return data;
+    const { data: sessionData, error: refreshError } = await this.supa.supabase.auth.refreshSession();
+    if (refreshError) throw refreshError;
+
+    this.session$.next(sessionData.session);
+    return await this.refreshFromSession(sessionData.session);
   }
 
   async unenrollFactor(factorId: string) {
