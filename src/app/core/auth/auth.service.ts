@@ -175,8 +175,8 @@ export class AuthService {
     this.profile$.next(null);
   }
 
-  async refreshRole() {
-    await this.refreshFromSession(this.sessionSnapshot());
+  async refreshRole(): Promise<Profile | null> {
+    return await this.refreshFromSession(this.sessionSnapshot());
   }
 
   async resendConfirmationEmail(email: string) {
@@ -208,12 +208,29 @@ export class AuthService {
     return factors.some(f => f.factor_type === 'totp' && f.status === 'verified');
   }
 
-  async enrollTotp(displayName = 'Authenticator App'): Promise<MfaEnrollResult> {
+  async enrollTotp(displayName = 'Lagun'): Promise<MfaEnrollResult> {
+    const { data: factors } = await this.supa.supabase.auth.mfa.listFactors();
+
+    if (factors) {
+      const allFactors = [...(factors.totp || []), ...(factors.phone || [])];
+      const existingUnverified = allFactors.filter(f =>
+        f.friendly_name?.startsWith(displayName) && (f.status as string) === 'unverified'
+      );
+
+      for (const f of existingUnverified) {
+        await this.supa.supabase.auth.mfa.unenroll({ factorId: f.id });
+      }
+    }
+
     const { data, error } = await this.supa.supabase.auth.mfa.enroll({
       factorType: 'totp',
-      friendlyName: displayName,
+      friendlyName: `${displayName}-${Date.now()}`,
     });
-    if (error) throw new Error(error.message);
+
+    if (error) {
+      throw new Error(error.message || 'No se pudo iniciar MFA.');
+    }
+
     return {
       factorId: data.id,
       qrCode: data.totp.qr_code,
@@ -228,10 +245,12 @@ export class AuthService {
 
     if (challengeError) throw new Error(challengeError.message);
 
+    const cleanCode = code.replace(/\s+/g, '');
+
     const { data, error } = await this.supa.supabase.auth.mfa.verify({
       factorId,
       challengeId: challengeData.id,
-      code: code.trim(),
+      code: cleanCode,
     });
 
     if (error) throw new Error('Código MFA inválido.');
@@ -248,9 +267,11 @@ export class AuthService {
 
     if (!factor) throw new Error('No hay un factor TOTP verificado.');
 
+    const cleanCode = code.replace(/\s+/g, '');
+
     const { data, error } = await this.supa.supabase.auth.mfa.challengeAndVerify({
       factorId: factor.id,
-      code: code.trim(),
+      code: cleanCode,
     });
 
     if (error) throw new Error('Código MFA inválido.');
@@ -266,12 +287,12 @@ export class AuthService {
     if (error) throw new Error(error.message);
   }
 
-  private async refreshFromSession(session: Session | null) {
+  public async refreshFromSession(session: Session | null): Promise<Profile | null> {
     const uid = session?.user?.id ?? null;
     if (!uid) {
       this.role$.next('reader');
       this.profile$.next(null);
-      return;
+      return null;
     }
 
     const { data, error } = await this.supa.supabase
@@ -283,19 +304,20 @@ export class AuthService {
     if (error || !data) {
       this.role$.next('reader');
       this.profile$.next(null);
-      return;
+      return null;
     }
 
     const profile = (data as unknown) as Profile;
     this.profile$.next(profile);
     this.role$.next(profile.role ?? 'reader');
+    return profile;
   }
 
   private mapAuthError(message: string): string {
     const msg = (message || '').toLowerCase();
     if (msg.includes('email not confirmed')) return 'Confirma tu correo.';
-    if (msg.includes('invalid credentials')) return 'Credenciales incorrectas.';
-    if (msg.includes('already registered')) return 'El correo ya existe.';
-    return message || 'Error de autenticación.';
+    if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) return 'Correo o contraseña incorrectos.';
+    if (msg.includes('user already registered') || msg.includes('already registered')) return 'Ese correo ya está registrado.';
+    return message || 'Ocurrió un error de autenticación.';
   }
 }

@@ -19,6 +19,11 @@ export const routes: Routes = [
           import("./features/news/pages/news-list.page").then((m) => m.NewsListPage),
       },
       {
+        path: "news/:slug",
+        loadComponent: () =>
+          import("./features/news/pages/news-detail.page").then((m) => m.NewsDetailPage),
+      },
+      {
         path: "reviews",
         loadComponent: () =>
           import("./features/reviews/pages/reviews-list.page").then((m) => m.ReviewsListPage),

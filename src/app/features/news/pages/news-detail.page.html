@@ -1,0 +1,47 @@
+<section class="max-w-4xl mx-auto px-6 py-16 text-white">
+    <div *ngIf="loading" class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-[#00E5FF]"></div>
+    </div>
+
+    <article *ngIf="!loading && article">
+        <header class="mb-10">
+            <div class="flex gap-2 mb-6">
+                <span *ngFor="let cat of article.categories"
+                    class="px-3 py-1 rounded-full text-[10px] font-bold bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] uppercase tracking-widest">
+                    {{ cat.name }}
+                </span>
+            </div>
+
+            <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight">
+                {{ article.title }}
+            </h1>
+
+            <div class="text-white/40 text-sm font-mono">
+                {{ article.published_at | date:'fullDate' }}
+            </div>
+        </header>
+
+        <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/10 mb-12">
+            <img [src]="article.cover_image_url" [alt]="article.title" class="w-full h-full object-cover">
+        </div>
+
+        <div class="prose prose-invert max-w-none">
+            <p class="text-xl text-white/70 italic mb-10 border-l-4 border-[#FF2CDF] pl-6">
+                {{ article.excerpt }}
+            </p>
+
+            <div class="text-white/80 leading-loose text-lg" [innerHTML]="article.content"></div>
+        </div>
+
+        <footer class="mt-20 pt-10 border-t border-white/10">
+            <a routerLink="/news" class="text-[#00E5FF] font-bold uppercase tracking-widest text-sm">
+                ← Volver a noticias
+            </a>
+        </footer>
+    </article>
+
+    <div *ngIf="!loading && !article" class="text-center py-20">
+        <h2 class="text-2xl font-bold mb-4">Noticia no encontrada</h2>
+        <a routerLink="/news" class="text-[#00E5FF] underline">Volver al listado</a>
+    </div>
+</section>
