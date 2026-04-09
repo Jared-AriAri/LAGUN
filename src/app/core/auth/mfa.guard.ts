@@ -6,10 +6,10 @@ export const mfaGuard: CanActivateFn = async () => {
     const auth = inject(AuthService);
     const router = inject(Router);
 
-    const { currentLevel, nextLevel } = await auth.getAuthenticatorAssuranceLevel();
+    const aal = await auth.getAuthenticatorAssuranceLevel();
 
-    if (nextLevel === 'aal2' && currentLevel !== 'aal2') {
-        return router.parseUrl('/mfa/verify');
+    if (aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+        return router.parseUrl('/auth/mfa-verify');
     }
 
     return true;
