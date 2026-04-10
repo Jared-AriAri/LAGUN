@@ -1,10 +1,11 @@
 import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
 import { RouterLink } from "@angular/router";
 
 @Component({
-  selector: "lagun-footer",
+  selector: "app-footer",
   standalone: true,
-  imports: [RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: "./footer.component.html",
 })
-export class FooterComponent {}
+export class FooterComponent { }

@@ -1,84 +1,77 @@
-import { Routes } from "@angular/router";
-import { PublicLayoutComponent } from "./layouts/public-layout/public-layout.component";
-import { AdminGuard } from "./core/auth/admin.guard";
-import { mfaGuard } from "./core/auth/mfa.guard";
+import { Routes } from '@angular/router';
+import { PublicLayoutComponent } from './layouts/public-layout/public-layout.component';
+import { AdminGuard } from './core/auth/admin.guard';
+import { AuthGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
-    path: "",
+    path: '',
     component: PublicLayoutComponent,
     children: [
       {
-        path: "",
+        path: '',
         loadComponent: () =>
-          import("./features/landing/pages/landing.page").then((m) => m.LandingPage),
+          import('./features/landing/pages/landing.page').then((m) => m.LandingPage),
       },
       {
-        path: "news",
+        path: 'news',
         loadComponent: () =>
-          import("./features/news/pages/news-list.page").then((m) => m.NewsListPage),
+          import('./features/news/pages/news-list.page').then((m) => m.NewsListPage),
       },
       {
-        path: "news/:slug",
+        path: 'news/:slug',
         loadComponent: () =>
-          import("./features/news/pages/news-detail.page").then((m) => m.NewsDetailPage),
+          import('./features/news/pages/news-detail.page').then((m) => m.NewsDetailPage),
       },
       {
-        path: "reviews",
+        path: 'reviews',
         loadComponent: () =>
-          import("./features/reviews/pages/reviews-list.page").then((m) => m.ReviewsListPage),
+          import('./features/reviews/pages/reviews-list.page').then((m) => m.ReviewsListPage),
       },
       {
-        path: "login",
+        path: 'reviews/:slug',
         loadComponent: () =>
-          import("./features/auth/pages/login.page").then((m) => m.LoginPage),
+          import('./features/reviews/pages/review-detail.page').then((m) => m.ReviewDetailPage),
       },
       {
-        path: "register",
+        path: 'terminos',
         loadComponent: () =>
-          import("./features/auth/pages/register.page").then((m) => m.RegisterPage),
+          import('./features/legal/pages/terms.page').then((m) => m.TermsPage),
       },
       {
-        path: "confirm-email",
+        path: 'privacidad',
         loadComponent: () =>
-          import("./features/auth/pages/confirm-email.page").then((m) => m.ConfirmEmailPage),
+          import('./features/legal/pages/privacy.page').then((m) => m.PrivacyPage),
       },
       {
-        path: "mfa/setup",
-        canActivate: [mfaGuard],
+        path: 'login',
         loadComponent: () =>
-          import("./features/auth/pages/mfa-setup.page").then((m) => m.MfaSetupPage),
+          import('./features/auth/pages/login.page').then((m) => m.LoginPage),
       },
       {
-        path: "mfa/verify",
+        path: 'register',
         loadComponent: () =>
-          import("./features/auth/pages/mfa-verify.page").then((m) => m.MfaVerifyPage),
+          import('./features/auth/pages/register.page').then((m) => m.RegisterPage),
       },
       {
-        path: "security",
-        canActivate: [mfaGuard],
+        path: 'mi-cuenta',
+        canActivate: [AuthGuard],
         loadComponent: () =>
-          import("./features/auth/pages/security.page").then((m) => m.SecurityPage),
+          import('./features/profile/pages/mi-cuenta.page').then((m) => m.MiCuentaPage),
       },
       {
-        path: "terminos",
+        path: 'writer',
+        canActivate: [AuthGuard],
         loadComponent: () =>
-          import("./features/legal/pages/terms.page").then((m) => m.TermsPage),
+          import('./features/writer/pages/writer.page').then((m) => m.WriterPage),
       },
       {
-        path: "privacidad",
+        path: 'admin',
+        canActivate: [AuthGuard, AdminGuard],
         loadComponent: () =>
-          import("./features/legal/pages/privacy.page").then((m) => m.PrivacyPage),
-      },
-      {
-        path: "admin",
-        canActivate: [AdminGuard, mfaGuard],
-        loadComponent: () =>
-          import("./features/admin/dashboard/admin-dashboard.page").then(
-            (m) => m.AdminDashboardPage
-          ),
-      },
+          import('./features/admin/pages/admin-users.page').then((m) => m.AdminUsersPage),
+      }
     ],
   },
-  { path: "**", redirectTo: "" },
+  { path: '**', redirectTo: '' },
 ];

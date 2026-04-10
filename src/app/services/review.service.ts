@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 
-export interface NewsArticle {
+export interface ReviewArticle {
     id: string;
     slug: string;
     title: string;
@@ -11,60 +11,60 @@ export interface NewsArticle {
     status: 'draft' | 'published' | 'archived';
     author_id: string;
     last_edited_by: string | null;
-    published_at: string | null;
     created_at: string;
     updated_at: string;
     buy_link: string | null;
-    category_id: string | null;
-    news_categories?: { name: string } | null;
+    rating: number | null;
+    genre_id: string | null;
+    game_genres?: { name: string } | null;
     profiles?: { id: string; full_name: string | null; avatar_url: string | null } | null;
 }
 
 @Injectable({ providedIn: 'root' })
-export class NewsService {
+export class ReviewService {
     private supa = inject(SupabaseService);
 
-    async getPublishedNews(): Promise<NewsArticle[]> {
+    async getPublishedReviews(): Promise<ReviewArticle[]> {
         const { data, error } = await this.supa.supabase
-            .from('news_articles')
+            .from('reviews')
             .select(`
                 *,
-                news_categories!news_articles_category_id_fkey ( name ),
+                game_genres!reviews_genre_id_fkey ( name ),
                 profiles:author_id ( id, full_name, avatar_url )
             `)
             .eq('status', 'published')
-            .order('published_at', { ascending: false });
+            .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Supabase getPublishedNews error:', JSON.stringify(error, null, 2), error);
+            console.error('Supabase getPublishedReviews error:', JSON.stringify(error, null, 2), error);
             throw error;
         }
 
-        return (data || []).map((art: any) => this.formatArticle(art));
+        return (data || []).map((art: any) => this.formatReview(art));
     }
 
-    async getCategories() {
+    async getGenres() {
         const { data, error } = await this.supa.supabase
-            .from('news_categories')
+            .from('game_genres')
             .select('id, name')
             .order('name', { ascending: true });
 
         if (error) {
-            console.error('Supabase getCategories error:', JSON.stringify(error, null, 2), error);
+            console.error('Supabase getGenres error:', JSON.stringify(error, null, 2), error);
             throw error;
         }
 
         return data || [];
     }
 
-    async getNewsBySlug(slug: string): Promise<NewsArticle> {
+    async getReviewBySlug(slug: string): Promise<ReviewArticle> {
         const cleanSlug = (slug || '').trim();
 
         const { data, error } = await this.supa.supabase
-            .from('news_articles')
+            .from('reviews')
             .select(`
                 *,
-                news_categories!news_articles_category_id_fkey ( name ),
+                game_genres!reviews_genre_id_fkey ( name ),
                 profiles:author_id ( id, full_name, avatar_url )
             `)
             .eq('slug', cleanSlug)
@@ -72,26 +72,22 @@ export class NewsService {
             .maybeSingle();
 
         if (error) {
-            console.error('Supabase getNewsBySlug error:', JSON.stringify(error, null, 2), error);
+            console.error('Supabase getReviewBySlug error:', JSON.stringify(error, null, 2), error);
             throw error;
         }
 
         if (!data) {
-            throw new Error(`No se encontró una noticia publicada con slug: ${cleanSlug}`);
+            throw new Error(`No se encontró una reseña publicada con slug: ${cleanSlug}`);
         }
 
-        return this.formatArticle(data);
+        return this.formatReview(data);
     }
 
-    private formatArticle(art: any): NewsArticle {
+    private formatReview(art: any): ReviewArticle {
         return {
             ...art,
-            news_categories: Array.isArray(art.news_categories)
-                ? art.news_categories[0] ?? null
-                : art.news_categories ?? null,
-            profiles: Array.isArray(art.profiles)
-                ? art.profiles[0] ?? null
-                : art.profiles ?? null
+            game_genres: Array.isArray(art.game_genres) ? art.game_genres[0] ?? null : art.game_genres ?? null,
+            profiles: Array.isArray(art.profiles) ? art.profiles[0] ?? null : art.profiles ?? null
         };
     }
 }

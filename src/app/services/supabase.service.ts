@@ -17,6 +17,11 @@ export class SupabaseService {
           detectSessionInUrl: true,
           storageKey: 'lagun-auth-token'
         },
+        realtime: {
+          params: {
+            eventsPerSecond: 10,
+          }
+        }
       }
     );
   }

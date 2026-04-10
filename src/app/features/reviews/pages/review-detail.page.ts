@@ -1,20 +1,20 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { NewsService, NewsArticle } from '../../../services/news.service';
+import { ReviewService, ReviewArticle } from '../../../services/review.service';
 
 @Component({
-    selector: 'app-news-detail',
+    selector: 'app-review-detail',
     standalone: true,
     imports: [CommonModule, RouterModule],
-    templateUrl: './news-detail.page.html',
+    templateUrl: './review-detail.page.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NewsDetailPage implements OnInit {
+export class ReviewDetailPage implements OnInit {
     private route = inject(ActivatedRoute);
-    private newsService = inject(NewsService);
+    private reviewService = inject(ReviewService);
 
-    article = signal<NewsArticle | null>(null);
+    article = signal<ReviewArticle | null>(null);
     loading = signal(true);
     errorMessage = signal('');
 
@@ -22,18 +22,18 @@ export class NewsDetailPage implements OnInit {
         const slug = this.route.snapshot.paramMap.get('slug');
 
         if (!slug) {
-            this.errorMessage.set('No se recibió el slug de la noticia.');
+            this.errorMessage.set('No se recibió el slug de la reseña.');
             this.loading.set(false);
             return;
         }
 
         try {
-            const data = await this.newsService.getNewsBySlug(slug);
+            const data = await this.reviewService.getReviewBySlug(slug);
             this.article.set(data);
         } catch (error: any) {
-            console.error('Error al obtener la noticia:', JSON.stringify(error, null, 2), error);
+            console.error('Error al obtener la reseña:', JSON.stringify(error, null, 2), error);
             this.article.set(null);
-            this.errorMessage.set(error?.message || 'No se pudo cargar la noticia.');
+            this.errorMessage.set(error?.message || 'No se pudo cargar la reseña.');
         } finally {
             this.loading.set(false);
         }

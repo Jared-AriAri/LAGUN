@@ -1,163 +1,129 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { AuthService, Profile } from '../../../core/auth/auth.service';
-
-type NavLink = {
-  label: string;
-  path: string;
-};
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { combineLatest, map, startWith, shareReplay, filter, Subscription } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './navbar.component.html',
+  templateUrl: './navbar.component.html'
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  ready = false;
-  loggedIn = false;
-  profile: Profile | null = null;
+  private auth = inject(AuthService);
+  private router = inject(Router);
+  private cd = inject(ChangeDetectorRef);
+  private routerSub?: Subscription;
 
-  links: NavLink[] = [
+  isScrolled = false;
+  profileMenuOpen = false;
+  isMobileOpen = false;
+
+  private readonly initialVm = {
+    ready: true,
+    loggedIn: false,
+    profile: null,
+    initial: 'U',
+    canSeeWriterPanel: false,
+    canSeeAdminPanel: false
+  };
+
+  readonly vm$ = combineLatest({
+    ready: this.auth.readyChanges().pipe(startWith(true)),
+    loggedIn: this.auth.sessionChanges().pipe(map(s => !!s?.user?.id), startWith(false)),
+    profile: this.auth.profileChanges().pipe(startWith(null)),
+  }).pipe(
+    map(({ loggedIn, profile }) => {
+      const role = profile?.role ?? 'reader';
+      return {
+        ready: true,
+        loggedIn,
+        profile,
+        initial: (profile?.full_name?.trim()?.[0] || 'U').toUpperCase(),
+        canSeeWriterPanel: loggedIn && (role === 'writer' || role === 'admin'),
+        canSeeAdminPanel: loggedIn && role === 'admin'
+      };
+    }),
+    startWith(this.initialVm),
+    shareReplay(1)
+  );
+
+  links = [
     { label: 'Noticias', path: '/news' },
-    { label: 'Reseñas', path: '/reviews' },
+    { label: 'Reseñas', path: '/reviews' }
   ];
 
-  private sub = new Subscription();
-  private mobile = false;
-  profileMenuOpen = false;
-
-  constructor(private auth: AuthService, private router: Router) { }
-
   ngOnInit() {
-    this.ready = this.auth.isReadySnapshot();
-    this.loggedIn = this.auth.isLoggedInSnapshot();
-    this.profile = this.auth.profileSnapshot();
+    this.auth.refreshRole();
 
-    this.sub.add(
-      this.auth.readyChanges().subscribe((ready) => {
-        this.ready = ready;
-      })
-    );
-
-    this.sub.add(
-      this.auth.sessionChanges().subscribe((session) => {
-        this.loggedIn = !!session?.user?.id;
-        if (!this.loggedIn) {
-          this.profileMenuOpen = false;
-        }
-      })
-    );
-
-    this.sub.add(
-      this.auth.profileChanges().subscribe((profile) => {
-        this.profile = profile;
-      })
-    );
+    this.routerSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.isMobileOpen = false;
+      this.profileMenuOpen = false;
+      setTimeout(() => {
+        this.cd.markForCheck();
+        this.cd.detectChanges();
+      }, 0);
+    });
   }
 
   ngOnDestroy() {
-    this.sub.unsubscribe();
+    this.routerSub?.unsubscribe();
   }
 
-  @HostListener('document:click')
-  closeProfileMenuFromOutside() {
-    if (this.profileMenuOpen) {
-      this.profileMenuOpen = false;
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const scroll = window.scrollY > 20;
+    if (this.isScrolled !== scroll) {
+      this.isScrolled = scroll;
+      this.cd.detectChanges();
     }
   }
 
-  mobileOpen(): boolean {
-    return this.mobile;
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      this.isMobileOpen = false;
+      this.profileMenuOpen = false;
+      this.cd.detectChanges();
+    }
   }
 
-  toggleMobile(): void {
-    this.mobile = !this.mobile;
-  }
-
-  closeMobile(): void {
-    this.mobile = false;
-  }
-
-  goLogin() {
-    this.closeMobile();
-    this.router.navigate(['/login']);
+  toggleMobile(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isMobileOpen = !this.isMobileOpen;
+    this.profileMenuOpen = false;
+    this.cd.detectChanges();
   }
 
   toggleProfileMenu(event: MouseEvent) {
+    event.preventDefault();
     event.stopPropagation();
     this.profileMenuOpen = !this.profileMenuOpen;
+    this.isMobileOpen = false;
+    this.cd.detectChanges();
   }
 
-  closeProfileMenu(event?: MouseEvent) {
-    event?.stopPropagation();
+  navigate(path: string) {
+    this.isMobileOpen = false;
     this.profileMenuOpen = false;
+    this.router.navigate([path]);
+    this.cd.detectChanges();
   }
 
-  goToUser(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.profileMenuOpen = false;
-    this.closeMobile();
-    this.router.navigate(['/mi-cuenta']);
-  }
-
-  goToSecurity(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.profileMenuOpen = false;
-    this.closeMobile();
-    this.router.navigate(['/security']);
-  }
-
-  goToWriterPanel(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.profileMenuOpen = false;
-    this.closeMobile();
-    this.router.navigate(['/writer']);
-  }
-
-  goToAdminPanel(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.profileMenuOpen = false;
-    this.closeMobile();
-    this.router.navigate(['/admin']);
-  }
-
-  goToReviewsPanel(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.profileMenuOpen = false;
-    this.closeMobile();
-    this.router.navigate(['/reviews-panel']);
+  goLogin() {
+    this.navigate('/login');
   }
 
   async logout() {
     await this.auth.signOut();
+    this.isMobileOpen = false;
     this.profileMenuOpen = false;
-    this.closeMobile();
     this.router.navigate(['/']);
-  }
-
-  get initial(): string {
-    const name = this.profile?.full_name?.trim();
-    return (name?.[0] || 'U').toUpperCase();
-  }
-
-  get role(): 'reader' | 'writer' | 'admin' {
-    const role = this.profile?.role;
-    if (role === 'writer' || role === 'admin') return role;
-    return 'reader';
-  }
-
-  get canSeeWriterPanel(): boolean {
-    return this.role === 'writer';
-  }
-
-  get canSeeAdminPanel(): boolean {
-    return this.role === 'admin';
-  }
-
-  get canSeeReviewsPanel(): boolean {
-    return this.role === 'writer' || this.role === 'admin';
+    this.cd.detectChanges();
   }
 }

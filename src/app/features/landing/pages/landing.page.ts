@@ -1,20 +1,101 @@
-import { Component } from "@angular/core";
+import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SupabaseService } from '../../../services/supabase.service';
+import { RouterModule } from '@angular/router';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 @Component({
+  selector: 'app-landing',
   standalone: true,
-  template: `
-    <section class="min-h-[calc(100vh-72px)] bg-[#05010A] text-white flex items-center">
-      <div class="max-w-7xl mx-auto px-6 py-16">
-        <h1 class="text-5xl md:text-6xl font-extrabold tracking-widest uppercase
-          bg-gradient-to-r from-[#00E5FF] via-[#FF2CDF] to-[#7C3AED]
-          bg-clip-text text-transparent">
-          LAGUN
-        </h1>
-        <p class="mt-4 text-white/70 max-w-xl">
-          Noticias y reseñas de videojuegos con estética neón premium.
-        </p>
-      </div>
-    </section>
-  `,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './landing.page.html'
 })
-export class LandingPage {}
+export class LandingPage implements OnInit, OnDestroy {
+  private supa = inject(SupabaseService);
+  private zone = inject(NgZone);
+  private cd = inject(ChangeDetectorRef);
+
+  latestContent: any[] = [];
+  loading = true;
+  private channel?: RealtimeChannel;
+
+  ngOnInit() {
+    this.fetchContent();
+    this.setupRealtime();
+  }
+
+  ngOnDestroy() {
+    if (this.channel) {
+      this.supa.supabase.removeChannel(this.channel);
+    }
+  }
+
+  async fetchContent() {
+    this.loading = true;
+    this.cd.detectChanges();
+
+    const [news, reviews] = await Promise.all([
+      this.supa.supabase
+        .from('news_articles')
+        .select('*')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(6),
+      this.supa.supabase
+        .from('reviews')
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(6)
+    ]);
+
+    this.zone.run(() => {
+      if (news.error) {
+        console.error('Error cargando noticias:', news.error);
+      }
+
+      if (reviews.error) {
+        console.error('Error cargando reseñas:', reviews.error);
+      }
+
+      const n = (news.data || []).map((i) => ({
+        ...i,
+        content_type: 'news',
+        route: i.slug ? `/news/${i.slug}` : null
+      }));
+
+      const r = (reviews.data || []).map((i) => ({
+        ...i,
+        content_type: 'review',
+        route: i.slug ? `/reviews/${i.slug}` : null
+      }));
+
+      this.latestContent = [...n, ...r]
+        .sort((a, b) => {
+          const dateA = new Date(a.published_at || a.created_at || 0).getTime();
+          const dateB = new Date(b.published_at || b.created_at || 0).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 6);
+
+      this.loading = false;
+      this.cd.detectChanges();
+    });
+  }
+
+  private setupRealtime() {
+    this.channel = this.supa.supabase
+      .channel('landing-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'news_articles' },
+        () => this.fetchContent()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reviews' },
+        () => this.fetchContent()
+      )
+      .subscribe();
+  }
+}

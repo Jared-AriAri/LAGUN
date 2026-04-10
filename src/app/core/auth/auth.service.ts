@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import type {
   AuthChangeEvent,
-  Factor,
   Session,
   User,
 } from '@supabase/supabase-js';
@@ -17,22 +16,6 @@ export type Profile = {
   bio: string | null;
   is_active: boolean;
   role: AppRole;
-};
-
-export type MfaEnrollResult = {
-  factorId: string;
-  qrCode: string;
-  secret: string;
-  uri: string;
-};
-
-export type AuthenticatorAssuranceLevelResponse = {
-  currentLevel: 'aal1' | 'aal2' | null;
-  nextLevel: 'aal1' | 'aal2' | null;
-  currentAuthenticationMethods: {
-    method: string;
-    timestamp: number;
-  }[];
 };
 
 @Injectable({ providedIn: 'root' })
@@ -60,13 +43,14 @@ export class AuthService {
       return;
     }
 
-    this.session$.next(data.session ?? null);
-    await this.refreshFromSession(data.session ?? null);
+    const session = data.session;
+    this.session$.next(session);
+    await this.refreshFromSession(session);
 
     this.supa.supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
-        this.session$.next(session);
-        await this.refreshFromSession(session);
+      async (_event: AuthChangeEvent, newSession: Session | null) => {
+        this.session$.next(newSession);
+        await this.refreshFromSession(newSession);
         this.ready$.next(true);
       }
     );
@@ -149,6 +133,28 @@ export class AuthService {
     return data;
   }
 
+  async signInWithPasskey() {
+    const { data, error } = await (this.supa.supabase.auth as any).signInWithPasskey();
+
+    if (error) {
+      throw new Error(this.mapAuthError(error.message));
+    }
+
+    this.session$.next(data.session ?? null);
+    await this.refreshFromSession(data.session ?? null);
+    return data;
+  }
+
+  async notifyLogin(email: string) {
+    try {
+      await this.supa.supabase.functions.invoke('send-login-notification', {
+        body: { email }
+      });
+    } catch (e) {
+      console.warn('Error enviando notificación de login:', e);
+    }
+  }
+
   async signUp(email: string, password: string, fullName: string) {
     const { data, error } = await this.supa.supabase.auth.signUp({
       email,
@@ -181,8 +187,8 @@ export class AuthService {
   }
 
   async refreshRole(): Promise<Profile | null> {
-    const { data: { session } } = await this.supa.supabase.auth.getSession();
-    return await this.refreshFromSession(session);
+    // Simplificado: usamos la sesión que ya tenemos en memoria
+    return await this.refreshFromSession(this.session$.value);
   }
 
   async resendConfirmationEmail(email: string) {
@@ -194,119 +200,6 @@ export class AuthService {
     if (error) {
       throw new Error(error.message || 'Error al reenviar el correo.');
     }
-  }
-
-  async getAuthenticatorAssuranceLevel(): Promise<AuthenticatorAssuranceLevelResponse> {
-    const { data, error } =
-      await this.supa.supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (error) throw new Error(error.message);
-    return data as AuthenticatorAssuranceLevelResponse;
-  }
-
-  async listMfaFactors(): Promise<Factor[]> {
-    const { data, error } = await this.supa.supabase.auth.mfa.listFactors();
-    if (error) throw new Error(error.message);
-    return [...(data.totp ?? []), ...(data.phone ?? [])];
-  }
-
-  async hasVerifiedTotpFactor(): Promise<boolean> {
-    const factors = await this.listMfaFactors();
-    return factors.some(f => f.factor_type === 'totp' && f.status === 'verified');
-  }
-
-  async enrollTotp(displayName = 'Lagun'): Promise<MfaEnrollResult> {
-    const { data: factors } = await this.supa.supabase.auth.mfa.listFactors();
-
-    if (factors) {
-      const allFactors = [...(factors.totp || []), ...(factors.phone || [])];
-      const existingUnverified = allFactors.filter(f =>
-        f.friendly_name?.startsWith(displayName) && (f.status as string) === 'unverified'
-      );
-
-      for (const f of existingUnverified) {
-        await this.supa.supabase.auth.mfa.unenroll({ factorId: f.id });
-      }
-    }
-
-    const { data, error } = await this.supa.supabase.auth.mfa.enroll({
-      factorType: 'totp',
-      friendlyName: `${displayName}-${Date.now()}`,
-    });
-
-    if (error) {
-      throw new Error(error.message || 'No se pudo iniciar MFA.');
-    }
-
-    return {
-      factorId: data.id,
-      qrCode: data.totp.qr_code,
-      secret: data.totp.secret,
-      uri: data.totp.uri,
-    };
-  }
-
-  async verifyTotpEnrollment(factorId: string, code: string) {
-    console.log('[Servicio] 1. Iniciando challenge...');
-    const cleanCode = code.replace(/\D/g, '');
-
-    const { data: challengeData, error: challengeError } =
-      await this.supa.supabase.auth.mfa.challenge({ factorId });
-
-    if (challengeError) {
-      console.error('[Servicio] Error en challenge:', challengeError);
-      throw challengeError;
-    }
-    console.log('[Servicio] 2. Challenge ok:', challengeData.id);
-
-    console.log('[Servicio] 3. Verificando código...');
-    const { data, error } = await this.supa.supabase.auth.mfa.verify({
-      factorId,
-      challengeId: challengeData.id,
-      code: cleanCode,
-    });
-
-    if (error) {
-      console.error('[Servicio] Error en verify:', error);
-      throw error;
-    }
-    console.log('[Servicio] 4. Verify ok. Refrescando sesión...');
-
-    const { data: sessionData, error: refreshError } = await this.supa.supabase.auth.refreshSession();
-    if (refreshError) {
-      console.error('[Servicio] Error en refreshSession:', refreshError);
-      throw refreshError;
-    }
-
-    console.log('[Servicio] 5. Sesión ok. Actualizando perfil...');
-    this.session$.next(sessionData.session);
-    return await this.refreshFromSession(sessionData.session);
-  }
-
-  async verifyTotpLogin(code: string) {
-    const factors = await this.listMfaFactors();
-    const factor = factors.find(f => f.factor_type === 'totp' && f.status === 'verified');
-
-    if (!factor) throw new Error('No hay un factor TOTP verificado.');
-
-    const cleanCode = code.replace(/\D/g, '');
-
-    const { data, error } = await this.supa.supabase.auth.mfa.challengeAndVerify({
-      factorId: factor.id,
-      code: cleanCode,
-    });
-
-    if (error) throw new Error(error.message || 'Código MFA inválido.');
-
-    const { data: sessionData, error: refreshError } = await this.supa.supabase.auth.refreshSession();
-    if (refreshError) throw refreshError;
-
-    this.session$.next(sessionData.session);
-    return await this.refreshFromSession(sessionData.session);
-  }
-
-  async unenrollFactor(factorId: string) {
-    const { error } = await this.supa.supabase.auth.mfa.unenroll({ factorId });
-    if (error) throw new Error(error.message);
   }
 
   public async refreshFromSession(session: Session | null): Promise<Profile | null> {
@@ -330,8 +223,11 @@ export class AuthService {
     }
 
     const profile = (data as unknown) as Profile;
+
+    // Aquí está el truco: emitimos los nuevos valores a los BehaviorSubjects
     this.profile$.next(profile);
     this.role$.next(profile.role ?? 'reader');
+
     return profile;
   }
 
